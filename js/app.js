@@ -2,6 +2,7 @@
 
 (function () {
   const DATA = window.NAWAR_DATA;
+  const STORAGE_KEY = "nawar_geoai_state_v1";
 
   const state = {
     lang: "en", // English by default
@@ -25,6 +26,53 @@
     planResult: null,
     extraSearchRegions: []
   };
+
+  function saveStateToStorage() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (e) {
+      // Ignore storage quota or privacy-mode errors
+    }
+  }
+
+  function loadStateFromStorage() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return false;
+      const saved = JSON.parse(raw);
+      if (!saved || typeof saved !== "object") return false;
+      Object.keys(state).forEach((key) => {
+        if (Object.prototype.hasOwnProperty.call(saved, key) && saved[key] !== undefined) {
+          state[key] = saved[key];
+        }
+      });
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function clearSavedFarmState() {
+    state.stage = "welcome";
+    state.wizStep = 1;
+    state.maxUnlockedStep = 1;
+    state.countryId = null;
+    state.regionId = null;
+    state.customCityName = null;
+    state.lat = 24.7136;
+    state.lon = 46.6753;
+    state.mapZoom = 10;
+    state.suggestedSoil = "loamy";
+    state.soilType = "loamy";
+    state.prevCropId = "none";
+    state.startSeason = "winter";
+    state.priority = "water";
+    state.activeStrategyKey = "water";
+    state.climateData = null;
+    state.planResult = null;
+    state.extraSearchRegions = [];
+    saveStateToStorage();
+  }
 
   let map = null;
   let streetTiles = null;
@@ -66,6 +114,7 @@
   // Stage & Wizard Navigation
   function showStage(stageName) {
     state.stage = stageName;
+    saveStateToStorage();
     document.getElementById("welcomeStage").classList.toggle("active-stage", stageName === "welcome");
     document.getElementById("wizardStage").classList.toggle("active-stage", stageName === "wizard");
     document.getElementById("dashboardStage").classList.toggle("active-stage", stageName === "dashboard");
@@ -137,6 +186,7 @@
     state.regionId = null;
     state.customCityName = null;
     state.extraSearchRegions = [];
+    saveStateToStorage();
 
     const searchInput = document.getElementById("citySearchInput");
     if (searchInput) searchInput.value = "";
@@ -338,6 +388,7 @@
   function updatePinCoordinates(lat, lon, recenter) {
     state.lat = Number(Math.max(-60, Math.min(70, Number(lat))).toFixed(4));
     state.lon = Number(Math.max(-180, Math.min(180, Number(lon))).toFixed(4));
+    saveStateToStorage();
 
     if (activeMarker) {
       activeMarker.setLatLng([state.lat, state.lon]);
@@ -390,6 +441,7 @@
     grid.querySelectorAll(".soil-card-btn").forEach((btn) => {
       btn.addEventListener("click", function () {
         state.soilType = this.getAttribute("data-soil");
+        saveStateToStorage();
         renderSoilCards();
       });
     });
@@ -606,6 +658,7 @@
         const chosen = this.getAttribute("data-strat");
         if (chosen && state.planResult.strategies[chosen]) {
           state.activeStrategyKey = chosen;
+          saveStateToStorage();
           renderStrategyCards();
           renderPlanTable(true);
           renderScenarioSection();
@@ -853,6 +906,7 @@
     if (langToggleBtn) {
       langToggleBtn.addEventListener("click", function () {
         state.lang = state.lang === "en" ? "ar" : "en";
+        saveStateToStorage();
         applyStaticTranslations();
         if (map && state.stage === "wizard" && state.wizStep === 2) {
           setTimeout(() => map.invalidateSize(), 120);
@@ -975,15 +1029,18 @@
     // Step 3: Crop & Season Selects
     document.getElementById("prevCropSelect").addEventListener("change", function () {
       state.prevCropId = this.value;
+      saveStateToStorage();
     });
     document.getElementById("seasonSelect").addEventListener("change", function () {
       state.startSeason = this.value;
+      saveStateToStorage();
     });
 
     // Step 4: Priority Buttons
     document.querySelectorAll(".priority-btn").forEach((btn) => {
       btn.addEventListener("click", function () {
         state.priority = this.getAttribute("data-priority");
+        saveStateToStorage();
         syncPriorityButtons();
         renderWizardSummary();
       });
@@ -998,9 +1055,7 @@
     document.getElementById("editLocationBtn").addEventListener("click", () => goToWizardStep(1));
     document.getElementById("editInputsBtn").addEventListener("click", () => goToWizardStep(3));
     document.getElementById("newFarmBtn").addEventListener("click", () => {
-      state.countryId = null;
-      state.regionId = null;
-      state.maxUnlockedStep = 1;
+      clearSavedFarmState();
       document.getElementById("regionPickerPanel").classList.add("hidden-block");
       renderCountryCards();
       showStage("welcome");
@@ -1042,8 +1097,21 @@
   }
 
   document.addEventListener("DOMContentLoaded", function () {
+    const hasSaved = loadStateFromStorage();
     applyStaticTranslations();
     bindEvents();
-    showStage("welcome");
+
+    if (hasSaved && state.stage === "dashboard" && state.climateData && state.planResult) {
+      showStage("dashboard");
+      renderResultsUI(false);
+    } else if (hasSaved && state.stage === "wizard") {
+      if (state.countryId) {
+        const panel = document.getElementById("regionPickerPanel");
+        if (panel) panel.classList.remove("hidden-block");
+      }
+      goToWizardStep(state.wizStep || 1);
+    } else {
+      showStage("welcome");
+    }
   });
 })();
