@@ -1,0 +1,10 @@
+# Workspace reference documents (keep local only)
+*.docx
+*.pdf
+~$*
+
+# Editor & OS files
+.vscode/
+.DS_Store
+Thumbs.db
+

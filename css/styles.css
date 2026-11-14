@@ -1,0 +1,1020 @@
+/* NAWAR GeoAI - Clean Agricultural & Geospatial Design System (EN/AR + Mobile-First) */
+
+:root {
+  --bg-page: #f5f3ec;
+  --bg-surface: #ffffff;
+  --bg-subtle: #edeae0;
+  --bg-accent-soft: #e9f2ec;
+
+  --text-primary: #18221c;
+  --text-secondary: #435249;
+  --text-muted: #68766d;
+
+  --border-color: #dcd8cc;
+  --border-strong: #c2bdb0;
+
+  --brand-green: #1f5c3a;
+  --brand-green-dark: #16442a;
+  --brand-amber: #c57b27;
+  --brand-terracotta: #b84a39;
+  --brand-blue: #3a7ca5;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+
+  --shadow-card: 0 2px 6px rgba(24, 34, 28, 0.05);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background-color: var(--bg-page);
+  color: var(--text-primary);
+  font-family: 'IBM Plex Sans', 'IBM Plex Sans Arabic', -apple-system, BlinkMacSystemFont, sans-serif;
+  line-height: 1.5;
+  font-size: 15px;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+html[lang="ar"] body {
+  font-family: 'IBM Plex Sans Arabic', 'IBM Plex Sans', Tahoma, sans-serif;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Top Header */
+.site-header {
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-color);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.header-inner {
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.brand-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-mark {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-sm);
+  background: var(--brand-green);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.brand-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.brand-tagline {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.meta-badge {
+  font-size: 0.78rem;
+  font-weight: 500;
+  padding: 5px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-subtle);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+}
+
+.lang-btn {
+  min-height: 38px;
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--brand-green);
+  background: var(--bg-accent-soft);
+  color: var(--brand-green-dark);
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.18s ease, transform 0.15s ease;
+}
+
+.lang-btn:hover {
+  background: var(--brand-green);
+  color: #ffffff;
+}
+
+.lang-btn:active {
+  transform: scale(0.98);
+}
+
+/* 7-Step Pipeline Strip */
+.pipeline-bar {
+  background: var(--bg-subtle);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.pipeline-inner {
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 9px 20px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.pipeline-inner::-webkit-scrollbar {
+  display: none;
+}
+
+.pipeline-step {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 5px 11px;
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.25s var(--ease-out);
+}
+
+.pipeline-step.step-active {
+  border-color: var(--brand-green);
+  background: var(--bg-accent-soft);
+  color: var(--brand-green-dark);
+}
+
+.pipeline-step:hover {
+  border-color: var(--brand-green);
+}
+
+.pipeline-arrow {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  user-select: none;
+}
+
+html[dir="rtl"] .pipeline-arrow {
+  transform: scaleX(-1);
+}
+
+/* Loading Bar */
+.loading-bar {
+  height: 0;
+  overflow: hidden;
+  background: var(--bg-accent-soft);
+  color: var(--brand-green-dark);
+  font-size: 0.82rem;
+  font-weight: 500;
+  text-align: center;
+  transition: height 0.2s ease, padding 0.2s ease;
+}
+
+.loading-bar.visible {
+  height: 32px;
+  padding: 5px 12px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+/* Main Workspace Layout */
+.workspace-container {
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 20px;
+  display: grid;
+  grid-template-columns: 410px 1fr;
+  gap: 22px;
+  align-items: start;
+}
+
+/* Cards */
+.panel-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  padding: 18px;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--bg-subtle);
+  flex-wrap: wrap;
+}
+
+.panel-title {
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* Setup & Map Column */
+.setup-column {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.field-row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.field-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.select-input,
+.text-input {
+  width: 100%;
+  min-height: 42px;
+  padding: 8px 11px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.9rem;
+  transition: border-color 0.15s ease;
+}
+
+.select-input:focus,
+.text-input:focus {
+  outline: none;
+  border-color: var(--brand-green);
+}
+
+/* Map Box */
+.map-wrapper {
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--bg-subtle);
+}
+
+.map-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 10px;
+  background: var(--bg-subtle);
+  border-bottom: 1px solid var(--border-color);
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.map-layer-group {
+  display: flex;
+  gap: 4px;
+}
+
+.map-layer-btn,
+.gps-btn {
+  padding: 5px 10px;
+  min-height: 32px;
+  font-family: inherit;
+  font-size: 0.76rem;
+  font-weight: 600;
+  border-radius: 4px;
+  border: 1px solid var(--border-strong);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.map-layer-btn.active {
+  background: var(--brand-green);
+  color: #ffffff;
+  border-color: var(--brand-green);
+}
+
+.gps-btn:hover {
+  border-color: var(--brand-green);
+  color: var(--brand-green-dark);
+}
+
+.farm-map {
+  width: 100%;
+  height: 250px;
+  z-index: 1;
+}
+
+.map-hint {
+  font-size: 0.77rem;
+  color: var(--text-muted);
+  padding: 7px 10px;
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border-color);
+}
+
+/* Custom Map Pin */
+.nawar-map-pin {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(31, 92, 58, 0.22);
+  border: 2px solid var(--brand-green);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nawar-map-pin-core {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--brand-green);
+}
+
+/* Priority Selector Cards */
+.priority-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.priority-btn {
+  min-height: 68px;
+  padding: 9px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-strong);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font-family: inherit;
+  text-align: center;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  transition: all 0.18s var(--ease-out);
+}
+
+.priority-btn:hover {
+  border-color: var(--brand-green);
+}
+
+.priority-btn.active {
+  border: 2px solid var(--brand-green);
+  background: var(--bg-accent-soft);
+}
+
+.prio-title {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.prio-sub {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  line-height: 1.25;
+}
+
+.primary-cta-btn {
+  width: 100%;
+  min-height: 46px;
+  margin-top: 4px;
+  padding: 11px 16px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--brand-green);
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.18s ease, transform 0.12s ease;
+}
+
+.primary-cta-btn:hover {
+  background: var(--brand-green-dark);
+}
+
+.primary-cta-btn:active {
+  transform: scale(0.99);
+}
+
+/* Right Column: Results Dashboard */
+.results-column {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* Status Pill */
+.status-pill {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 99px;
+}
+
+.status-live {
+  background: var(--bg-accent-soft);
+  color: var(--brand-green-dark);
+  border: 1px solid #b7d7c2;
+}
+
+.status-cached {
+  background: #f6ecdc;
+  color: #7d4e14;
+  border: 1px solid #e2c89f;
+}
+
+.location-subtitle {
+  font-size: 0.83rem;
+  font-weight: 600;
+  color: var(--brand-green-dark);
+}
+
+/* NASA Telemetry Strip */
+.telemetry-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.telemetry-box {
+  background: var(--bg-page);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 11px 12px;
+}
+
+.telemetry-label {
+  font-size: 0.76rem;
+  color: var(--text-secondary);
+  margin-bottom: 3px;
+}
+
+.telemetry-value {
+  font-size: 1.18rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* 3 Strategy Cards */
+.strategy-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.strategy-card {
+  text-align: inherit;
+  font-family: inherit;
+  background: var(--bg-page);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 8px;
+  transition: all 0.2s var(--ease-out);
+}
+
+.strategy-card:hover {
+  border-color: var(--brand-green);
+  transform: translateY(-1px);
+}
+
+.strategy-card.active {
+  background: var(--bg-surface);
+  border: 2px solid var(--brand-green);
+  box-shadow: 0 3px 10px rgba(31, 92, 58, 0.08);
+}
+
+.strategy-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.strategy-card-title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.rec-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: var(--brand-green);
+  color: #ffffff;
+}
+
+.strategy-crop-chain {
+  font-size: 0.83rem;
+  font-weight: 600;
+  color: var(--brand-green-dark);
+}
+
+.strategy-card-metrics {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  border-top: 1px solid var(--border-color);
+  padding-top: 6px;
+}
+
+/* 3-Season Plan Table */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.plan-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.plan-table th {
+  text-align: start;
+  padding: 10px 12px;
+  background: var(--bg-page);
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 0.78rem;
+  border-bottom: 1px solid var(--border-strong);
+}
+
+.plan-table td {
+  padding: 12px;
+  border-bottom: 1px solid var(--bg-subtle);
+  vertical-align: top;
+}
+
+.plan-table tr:last-child td {
+  border-bottom: none;
+}
+
+@keyframes fadeInRow {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.row-fade-in {
+  animation: fadeInRow 0.35s var(--ease-out) both;
+}
+
+.cell-season-num {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.cell-season-sub {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+}
+
+.cell-crop-name {
+  font-weight: 700;
+  color: var(--brand-green-dark);
+  font-size: 0.94rem;
+}
+
+.cell-crop-family {
+  font-size: 0.76rem;
+  color: var(--text-secondary);
+}
+
+.cell-reason-text {
+  color: var(--text-primary);
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+
+.rule-pill {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: var(--bg-page);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+}
+
+.risk-badge {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 4px;
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+
+.risk-low {
+  background: #e6f3eb;
+  color: #195432;
+}
+
+.risk-medium {
+  background: #f9eedb;
+  color: #875212;
+}
+
+.risk-high {
+  background: #fae6e3;
+  color: #8f2d1e;
+}
+
+.return-text {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* Charts Row */
+.charts-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+.chart-box {
+  position: relative;
+  height: 265px;
+  width: 100%;
+}
+
+/* Climate Scenario Stress Test */
+.confidence-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 12px;
+  border: 1px solid var(--border-color);
+}
+
+.conf-high {
+  background: #eaf4ee;
+  border-color: #b7d7c2;
+}
+
+.conf-medium {
+  background: #fbf1df;
+  border-color: #e4c692;
+}
+
+.conf-low {
+  background: #fbe8e5;
+  border-color: #e2b4ad;
+}
+
+.conf-score {
+  font-size: 1.55rem;
+  font-weight: 700;
+  color: var(--brand-green-dark);
+  min-width: 64px;
+}
+
+.conf-details {
+  flex: 1;
+}
+
+.conf-title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+
+.conf-bar-track {
+  height: 7px;
+  background: rgba(24, 34, 28, 0.1);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.conf-bar-fill {
+  height: 100%;
+  background: var(--brand-green);
+  border-radius: 99px;
+  transition: width 0.55s var(--ease-out);
+}
+
+.scenario-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.scenario-card {
+  background: var(--bg-page);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+}
+
+.scenario-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-bottom: 4px;
+  flex-wrap: wrap;
+}
+
+.scenario-name {
+  font-size: 0.83rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.scenario-status {
+  font-size: 0.73rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+
+.scen-pass {
+  background: #e6f3eb;
+  color: #195432;
+}
+
+.scen-warn {
+  background: #f9eedb;
+  color: #875212;
+}
+
+.scenario-desc {
+  font-size: 0.76rem;
+  color: var(--text-secondary);
+}
+
+/* Future Vision: NAWAR Field Node & NASA Datasets */
+.bottom-section {
+  max-width: 1360px;
+  margin: 0 auto 28px;
+  padding: 0 20px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
+}
+
+.field-node-flow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.fn-step-box {
+  background: var(--bg-page);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+}
+
+.fn-step-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--brand-green-dark);
+  margin-bottom: 4px;
+}
+
+.fn-step-desc {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.datasets-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.dataset-item {
+  background: var(--bg-page);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+}
+
+.dataset-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-bottom: 3px;
+}
+
+.dataset-name {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.dataset-tag {
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.tag-active {
+  background: var(--bg-accent-soft);
+  color: var(--brand-green-dark);
+}
+
+.tag-roadmap {
+  background: var(--bg-subtle);
+  color: var(--text-secondary);
+}
+
+.dataset-desc {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+/* Footer */
+.site-footer {
+  border-top: 1px solid var(--border-color);
+  background: var(--bg-surface);
+  padding: 16px 20px;
+  text-align: center;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+/* Responsive Tablet & Phone Vertical Layout */
+@media (max-width: 1024px) {
+  .workspace-container {
+    grid-template-columns: 1fr;
+  }
+
+  .charts-grid-2,
+  .bottom-section {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 680px) {
+  .header-inner {
+    padding: 10px 14px;
+  }
+
+  .meta-badge {
+    display: none;
+  }
+
+  .workspace-container,
+  .bottom-section {
+    padding: 12px;
+    gap: 14px;
+  }
+
+  .panel-card {
+    padding: 14px;
+  }
+
+  .telemetry-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .strategy-cards-grid,
+  .scenario-cards-grid,
+  .field-node-flow,
+  .datasets-list {
+    grid-template-columns: 1fr;
+  }
+
+  .priority-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .priority-btn {
+    min-height: 52px;
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 10px 14px;
+  }
+
+  /* Stack 3-Season Plan Table cleanly into vertical mobile cards */
+  .plan-table thead {
+    display: none;
+  }
+
+  .plan-table,
+  .plan-table tbody,
+  .plan-table tr,
+  .plan-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .plan-table tr {
+    background: var(--bg-page);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    margin-bottom: 10px;
+  }
+
+  .plan-table td {
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .plan-table td:last-child {
+    border-bottom: none;
+  }
+
+  .plan-table td::before {
+    content: attr(data-label);
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+  }
+}

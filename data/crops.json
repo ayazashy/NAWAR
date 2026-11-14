@@ -1,0 +1,299 @@
+{
+  "crops": [
+    {
+      "id": "wheat",
+      "name": { "en": "Durum Wheat", "ar": "القمح الصلب" },
+      "family": "Poaceae",
+      "familyLabel": { "en": "Cereals (Grasses)", "ar": "الحبوب (النجيليات)" },
+      "role": "heavy_feeder",
+      "preferredSeasons": ["winter", "spring"],
+      "tempRange": { "min": 6, "optMin": 14, "optMax": 26, "max": 33 },
+      "waterNeedMm": 380,
+      "droughtTolerance": 7,
+      "heatTolerance": 6,
+      "soilScores": { "loamy": 95, "clay": 88, "sandy": 62, "saline": 68 },
+      "returnTier": "medium",
+      "returnScore": 7.5,
+      "returnEstimate": { "en": "$950 – $1,300 / ha", "ar": "950 – 1,300 دولار / هكتار" },
+      "soilImpact": -1,
+      "reasons": {
+        "en": "Reliable winter staple with steady market demand; thrives in cool-to-mild seasons.",
+        "ar": "محصول شتوي أساسي بطلب سوقي مستقر، ينجح في المواسم المعتدلة والباردة."
+      }
+    },
+    {
+      "id": "barley",
+      "name": { "en": "Barley", "ar": "الشعير" },
+      "family": "Poaceae",
+      "familyLabel": { "en": "Cereals (Grasses)", "ar": "الحبوب (النجيليات)" },
+      "role": "light_feeder",
+      "preferredSeasons": ["winter", "spring"],
+      "tempRange": { "min": 5, "optMin": 12, "optMax": 27, "max": 35 },
+      "waterNeedMm": 280,
+      "droughtTolerance": 9,
+      "heatTolerance": 7,
+      "soilScores": { "loamy": 90, "clay": 84, "sandy": 78, "saline": 92 },
+      "returnTier": "medium",
+      "returnScore": 6.8,
+      "returnEstimate": { "en": "$750 – $1,050 / ha", "ar": "750 – 1,050 دولار / هكتار" },
+      "soilImpact": 0,
+      "reasons": {
+        "en": "Highly tolerant to drought and saline soils with low seasonal water demand.",
+        "ar": "يتحمل الجفاف وملوحة التربة بكفاءة عالية مع استهلاك منخفض للمياه."
+      }
+    },
+    {
+      "id": "sorghum",
+      "name": { "en": "Grain Sorghum", "ar": "الذرة الرفيعة" },
+      "family": "Poaceae",
+      "familyLabel": { "en": "Cereals (Grasses)", "ar": "الحبوب (النجيليات)" },
+      "role": "heavy_feeder",
+      "preferredSeasons": ["spring", "summer"],
+      "tempRange": { "min": 15, "optMin": 24, "optMax": 37, "max": 43 },
+      "waterNeedMm": 360,
+      "droughtTolerance": 9,
+      "heatTolerance": 9,
+      "soilScores": { "loamy": 92, "clay": 88, "sandy": 76, "saline": 80 },
+      "returnTier": "medium",
+      "returnScore": 7.2,
+      "returnEstimate": { "en": "$850 – $1,200 / ha", "ar": "850 – 1,200 دولار / هكتار" },
+      "soilImpact": -1,
+      "reasons": {
+        "en": "Built for hot summers; uses 35% less water than corn while resisting heat waves.",
+        "ar": "مناسب للصيف الحار؛ يستهلك مياه أقل بـ 35% من الذرة الصفراء ويقاوم موجات الحر."
+      }
+    },
+    {
+      "id": "millet",
+      "name": { "en": "Pearl Millet", "ar": "الدخن" },
+      "family": "Poaceae",
+      "familyLabel": { "en": "Cereals (Grasses)", "ar": "الحبوب (النجيليات)" },
+      "role": "light_feeder",
+      "preferredSeasons": ["spring", "summer"],
+      "tempRange": { "min": 16, "optMin": 25, "optMax": 39, "max": 45 },
+      "waterNeedMm": 250,
+      "droughtTolerance": 10,
+      "heatTolerance": 10,
+      "soilScores": { "loamy": 86, "clay": 72, "sandy": 94, "saline": 82 },
+      "returnTier": "medium",
+      "returnScore": 6.5,
+      "returnEstimate": { "en": "$700 – $980 / ha", "ar": "700 – 980 دولار / هكتار" },
+      "soilImpact": 0,
+      "reasons": {
+        "en": "Extreme heat and drought survivor; performs well even in sandy dryland soils.",
+        "ar": "الأعلى تحملاً للحرارة الشديدة والجفاف، وينجح في الأراضي الرملية الجافة."
+      }
+    },
+    {
+      "id": "chickpea",
+      "name": { "en": "Chickpea", "ar": "الحمص" },
+      "family": "Fabaceae",
+      "familyLabel": { "en": "Legumes (Nitrogen-Fixers)", "ar": "البقوليات (مثبتات النيتروجين)" },
+      "role": "nitrogen_fixer",
+      "preferredSeasons": ["winter", "spring"],
+      "tempRange": { "min": 8, "optMin": 15, "optMax": 29, "max": 35 },
+      "waterNeedMm": 260,
+      "droughtTolerance": 9,
+      "heatTolerance": 7,
+      "soilScores": { "loamy": 95, "clay": 82, "sandy": 80, "saline": 65 },
+      "returnTier": "high",
+      "returnScore": 8.4,
+      "returnEstimate": { "en": "$1,250 – $1,650 / ha", "ar": "1,250 – 1,650 دولار / هكتار" },
+      "soilImpact": 3,
+      "reasons": {
+        "en": "Fixes atmospheric nitrogen into the soil while requiring minimal irrigation.",
+        "ar": "يثبت النيتروجين الطبيعي في التربة ويحقق عائداً ممتازاً بأقل كمية مياه."
+      }
+    },
+    {
+      "id": "lentil",
+      "name": { "en": "Red Lentil", "ar": "العدس" },
+      "family": "Fabaceae",
+      "familyLabel": { "en": "Legumes (Nitrogen-Fixers)", "ar": "البقوليات (مثبتات النيتروجين)" },
+      "role": "nitrogen_fixer",
+      "preferredSeasons": ["winter", "spring"],
+      "tempRange": { "min": 6, "optMin": 13, "optMax": 26, "max": 32 },
+      "waterNeedMm": 240,
+      "droughtTolerance": 8,
+      "heatTolerance": 6,
+      "soilScores": { "loamy": 92, "clay": 78, "sandy": 82, "saline": 64 },
+      "returnTier": "high",
+      "returnScore": 8.1,
+      "returnEstimate": { "en": "$1,150 – $1,550 / ha", "ar": "1,150 – 1,550 دولار / هكتار" },
+      "soilImpact": 3,
+      "reasons": {
+        "en": "Low-water legume that enriches soil fertility after cereal crops.",
+        "ar": "محصول بقولي قليل الاستهلاك للماء يعيد خصوبة التربة بعد محاصيل الحبوب."
+      }
+    },
+    {
+      "id": "fababean",
+      "name": { "en": "Faba Bean", "ar": "الفول البلدي" },
+      "family": "Fabaceae",
+      "familyLabel": { "en": "Legumes (Nitrogen-Fixers)", "ar": "البقوليات (مثبتات النيتروجين)" },
+      "role": "nitrogen_fixer",
+      "preferredSeasons": ["winter"],
+      "tempRange": { "min": 6, "optMin": 13, "optMax": 25, "max": 31 },
+      "waterNeedMm": 320,
+      "droughtTolerance": 7,
+      "heatTolerance": 5,
+      "soilScores": { "loamy": 94, "clay": 92, "sandy": 68, "saline": 72 },
+      "returnTier": "high",
+      "returnScore": 8.2,
+      "returnEstimate": { "en": "$1,200 – $1,600 / ha", "ar": "1,200 – 1,600 دولار / هكتار" },
+      "soilImpact": 3,
+      "reasons": {
+        "en": "Strong nitrogen fixer that rebuilds heavy and loamy soils during cool months.",
+        "ar": "غني بتثبيت النيتروجين ويحسن قوام التربة الطينية والطميية في الموسم المعتدل."
+      }
+    },
+    {
+      "id": "cowpea",
+      "name": { "en": "Cowpea (Black-Eyed Pea)", "ar": "اللوبيا الجافة" },
+      "family": "Fabaceae",
+      "familyLabel": { "en": "Legumes (Nitrogen-Fixers)", "ar": "البقوليات (مثبتات النيتروجين)" },
+      "role": "nitrogen_fixer",
+      "preferredSeasons": ["spring", "summer"],
+      "tempRange": { "min": 16, "optMin": 23, "optMax": 37, "max": 42 },
+      "waterNeedMm": 290,
+      "droughtTolerance": 9,
+      "heatTolerance": 9,
+      "soilScores": { "loamy": 90, "clay": 78, "sandy": 92, "saline": 75 },
+      "returnTier": "high",
+      "returnScore": 8.0,
+      "returnEstimate": { "en": "$1,100 – $1,450 / ha", "ar": "1,100 – 1,450 دولار / هكتار" },
+      "soilImpact": 3,
+      "reasons": {
+        "en": "Heat-loving summer legume that covers the ground to reduce evaporation and enrich soil.",
+        "ar": "بقوليات صيفية تتحمل الحر، تغطي التربة لتقليل التبخر وتزيد خصوبتها."
+      }
+    },
+    {
+      "id": "sesame",
+      "name": { "en": "Sesame", "ar": "السمسم" },
+      "family": "Pedaliaceae",
+      "familyLabel": { "en": "Oilseeds (Pedaliaceae)", "ar": "البذور الزيتية (السمسميات)" },
+      "role": "light_feeder",
+      "preferredSeasons": ["spring", "summer"],
+      "tempRange": { "min": 16, "optMin": 24, "optMax": 37, "max": 42 },
+      "waterNeedMm": 310,
+      "droughtTolerance": 9,
+      "heatTolerance": 9,
+      "soilScores": { "loamy": 94, "clay": 72, "sandy": 90, "saline": 70 },
+      "returnTier": "high",
+      "returnScore": 8.9,
+      "returnEstimate": { "en": "$1,450 – $1,950 / ha", "ar": "1,450 – 1,950 دولار / هكتار" },
+      "soilImpact": 1,
+      "reasons": {
+        "en": "High-value cash crop with deep taproots that access moisture in hot, dry seasons.",
+        "ar": "محصول نقدي عالي الربحية بجذور عميقة تستخرج الرطوبة في المواسم الحارة."
+      }
+    },
+    {
+      "id": "sunflower",
+      "name": { "en": "Oil Sunflower", "ar": "دوار الشمس الزيتي" },
+      "family": "Asteraceae",
+      "familyLabel": { "en": "Oilseeds (Asteraceae)", "ar": "المركبات الزيتية (دوار الشمس)" },
+      "role": "light_feeder",
+      "preferredSeasons": ["spring", "summer"],
+      "tempRange": { "min": 12, "optMin": 20, "optMax": 34, "max": 39 },
+      "waterNeedMm": 390,
+      "droughtTolerance": 8,
+      "heatTolerance": 8,
+      "soilScores": { "loamy": 92, "clay": 88, "sandy": 78, "saline": 80 },
+      "returnTier": "high",
+      "returnScore": 8.3,
+      "returnEstimate": { "en": "$1,200 – $1,650 / ha", "ar": "1,200 – 1,650 دولار / هكتار" },
+      "soilImpact": 0,
+      "reasons": {
+        "en": "Deep root system breaks up compacted soil layers and brings strong oilseed returns.",
+        "ar": "جذوره العميقة تفكك التربة المتماسكة ويحقق عائداً اقتصادياً قوياً."
+      }
+    },
+    {
+      "id": "canola",
+      "name": { "en": "Canola / Mustard", "ar": "الكانولا (الخردل الزيتي)" },
+      "family": "Brassicaceae",
+      "familyLabel": { "en": "Brassicas (Mustard Family)", "ar": "العائلة الصليبية (الخردليات)" },
+      "role": "soil_builder",
+      "preferredSeasons": ["winter", "spring"],
+      "tempRange": { "min": 6, "optMin": 13, "optMax": 27, "max": 33 },
+      "waterNeedMm": 300,
+      "droughtTolerance": 8,
+      "heatTolerance": 6,
+      "soilScores": { "loamy": 90, "clay": 84, "sandy": 78, "saline": 86 },
+      "returnTier": "high",
+      "returnScore": 8.0,
+      "returnEstimate": { "en": "$1,100 – $1,500 / ha", "ar": "1,100 – 1,500 دولار / هكتار" },
+      "soilImpact": 1,
+      "reasons": {
+        "en": "Breaks cereal pest cycles naturally and tolerates moderate soil salinity.",
+        "ar": "يكسر دورة آفات الحبوب طبيعياً ويتحمل ملوحة التربة المتوسطة."
+      }
+    },
+    {
+      "id": "onion",
+      "name": { "en": "Dryland Onion", "ar": "البصل الحقلي" },
+      "family": "Alliaceae",
+      "familyLabel": { "en": "Alliums (Onion Family)", "ar": "العائلة الثومية (البصليات)" },
+      "role": "light_feeder",
+      "preferredSeasons": ["winter", "spring"],
+      "tempRange": { "min": 8, "optMin": 14, "optMax": 28, "max": 34 },
+      "waterNeedMm": 350,
+      "droughtTolerance": 7,
+      "heatTolerance": 7,
+      "soilScores": { "loamy": 95, "clay": 76, "sandy": 85, "saline": 70 },
+      "returnTier": "high",
+      "returnScore": 9.1,
+      "returnEstimate": { "en": "$1,700 – $2,400 / ha", "ar": "1,700 – 2,400 دولار / هكتار" },
+      "soilImpact": 0,
+      "reasons": {
+        "en": "High market value with a different root zone that pairs well between legumes and grains.",
+        "ar": "قيمة سوقية مرتفعة وجذور سطحية تتكامل في الدورة الزراعية بين البقوليات والحبوب."
+      }
+    },
+    {
+      "id": "tomato",
+      "name": { "en": "Drip-Irrigated Tomato", "ar": "الطماطم (ري بالتنقيط)" },
+      "family": "Solanaceae",
+      "familyLabel": { "en": "Nightshades (Solanaceae)", "ar": "العائلة الباذنجانية" },
+      "role": "heavy_feeder",
+      "preferredSeasons": ["spring", "winter"],
+      "tempRange": { "min": 11, "optMin": 18, "optMax": 31, "max": 36 },
+      "waterNeedMm": 440,
+      "droughtTolerance": 6,
+      "heatTolerance": 6,
+      "soilScores": { "loamy": 95, "clay": 78, "sandy": 84, "saline": 68 },
+      "returnTier": "high",
+      "returnScore": 9.5,
+      "returnEstimate": { "en": "$2,100 – $3,100 / ha", "ar": "2,100 – 3,100 دولار / هكتار" },
+      "soilImpact": -2,
+      "reasons": {
+        "en": "Top profit generator when planted in mild seasons and followed by soil-restoring legumes.",
+        "ar": "أعلى عائد مالي عند زراعته في المواسم المعتدلة متبوعاً بمحصول بقولي يعوض التربة."
+      }
+    },
+    {
+      "id": "cumin",
+      "name": { "en": "Cumin (Medicinal Spice)", "ar": "الكمون" },
+      "family": "Apiaceae",
+      "familyLabel": { "en": "Aromatic Umbellifers (Apiaceae)", "ar": "المحاصيل العطرية (الخيميات)" },
+      "role": "light_feeder",
+      "preferredSeasons": ["winter", "spring"],
+      "tempRange": { "min": 8, "optMin": 14, "optMax": 28, "max": 33 },
+      "waterNeedMm": 230,
+      "droughtTolerance": 9,
+      "heatTolerance": 7,
+      "soilScores": { "loamy": 92, "clay": 74, "sandy": 88, "saline": 74 },
+      "returnTier": "high",
+      "returnScore": 9.0,
+      "returnEstimate": { "en": "$1,600 – $2,300 / ha", "ar": "1,600 – 2,300 دولار / هكتار" },
+      "soilImpact": 1,
+      "reasons": {
+        "en": "High-income desert spice crop requiring very little water in dry climates.",
+        "ar": "محصول عطري عالي القيمة الاقتصادية يحتاج إلى كميات قليلة جداً من المياه."
+      }
+    }
+  ]
+}
+
