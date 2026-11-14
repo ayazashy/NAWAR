@@ -9,6 +9,9 @@
     stage: "welcome", // "welcome" | "wizard" | "dashboard"
     wizStep: 1, // 1 | 2 | 3 | 4
     maxUnlockedStep: 1,
+    gardenId: null,
+    gardenName: "",
+    savedGardens: [],
     countryId: null,
     regionId: null,
     customCityName: null,
@@ -56,6 +59,8 @@
     state.stage = "welcome";
     state.wizStep = 1;
     state.maxUnlockedStep = 1;
+    state.gardenId = null;
+    state.gardenName = "";
     state.countryId = null;
     state.regionId = null;
     state.customCityName = null;
@@ -72,6 +77,131 @@
     state.planResult = null;
     state.extraSearchRegions = [];
     saveStateToStorage();
+  }
+
+  function saveCurrentGardenToList() {
+    const dict = t();
+    if (!state.gardenId) {
+      state.gardenId = `garden-${Date.now()}`;
+    }
+    const cleanName = (state.gardenName || "").trim();
+    const finalName = cleanName || `${dict.defaultGardenPrefix} ${state.savedGardens.length + 1}`;
+    state.gardenName = finalName;
+
+    const record = {
+      gardenId: state.gardenId,
+      gardenName: finalName,
+      areaLabel: getCurrentAreaDisplayName(),
+      countryId: state.countryId,
+      regionId: state.regionId,
+      customCityName: state.customCityName,
+      lat: state.lat,
+      lon: state.lon,
+      mapZoom: state.mapZoom,
+      suggestedSoil: state.suggestedSoil,
+      soilType: state.soilType,
+      prevCropId: state.prevCropId,
+      startSeason: state.startSeason,
+      priority: state.priority,
+      activeStrategyKey: state.activeStrategyKey,
+      climateData: state.climateData,
+      planResult: state.planResult,
+      extraSearchRegions: state.extraSearchRegions
+    };
+
+    const existingIdx = state.savedGardens.findIndex((g) => g.gardenId === state.gardenId);
+    if (existingIdx >= 0) {
+      state.savedGardens[existingIdx] = record;
+    } else {
+      state.savedGardens.push(record);
+    }
+    saveStateToStorage();
+  }
+
+  function loadGardenById(gardenId) {
+    const g = state.savedGardens.find((item) => item.gardenId === gardenId);
+    if (!g) return;
+
+    state.gardenId = g.gardenId;
+    state.gardenName = g.gardenName;
+    state.countryId = g.countryId;
+    state.regionId = g.regionId;
+    state.customCityName = g.customCityName;
+    state.lat = g.lat;
+    state.lon = g.lon;
+    state.mapZoom = g.mapZoom || 11;
+    state.suggestedSoil = g.suggestedSoil || "loamy";
+    state.soilType = g.soilType;
+    state.prevCropId = g.prevCropId;
+    state.startSeason = g.startSeason;
+    state.priority = g.priority;
+    state.activeStrategyKey = g.activeStrategyKey || g.priority;
+    state.climateData = g.climateData;
+    state.planResult = g.planResult;
+    state.extraSearchRegions = g.extraSearchRegions || [];
+    state.maxUnlockedStep = 4;
+
+    showStage("dashboard");
+    renderResultsUI(true);
+  }
+
+  function deleteGardenById(gardenId) {
+    state.savedGardens = state.savedGardens.filter((g) => g.gardenId !== gardenId);
+    if (state.gardenId === gardenId) {
+      state.gardenId = null;
+      state.gardenName = "";
+    }
+    saveStateToStorage();
+    renderSavedGardensOnWelcome();
+  }
+
+  function renderSavedGardensOnWelcome() {
+    const section = document.getElementById("savedGardensSection");
+    const grid = document.getElementById("savedGardensGrid");
+    if (!section || !grid) return;
+
+    if (!state.savedGardens || state.savedGardens.length === 0) {
+      section.classList.add("hidden-block");
+      grid.innerHTML = "";
+      return;
+    }
+
+    const dict = t();
+    section.classList.remove("hidden-block");
+
+    grid.innerHTML = state.savedGardens
+      .map((g) => {
+        const strat = g.planResult && g.planResult.strategies[g.activeStrategyKey || g.priority];
+        const chain = strat ? strat.steps.map((s) => s.crop.name[state.lang]).join(" → ") : "";
+        const conf = strat ? `${strat.scenarioReport.confidencePercent}%` : "";
+
+        return `
+          <div class="saved-garden-card">
+            <div>
+              <div class="saved-garden-name">${g.gardenName}</div>
+              <div class="saved-garden-loc">${g.areaLabel || ""}</div>
+            </div>
+            <div class="saved-garden-chain">${chain} ${conf ? `(${conf})` : ""}</div>
+            <div class="saved-garden-actions">
+              <button type="button" class="primary-cta-btn open-garden-btn" data-gid="${g.gardenId}">${dict.openGardenBtn}</button>
+              <button type="button" class="secondary-btn del-garden-btn" data-gid="${g.gardenId}">${dict.deleteGardenBtn}</button>
+            </div>
+          </div>
+        `;
+      })
+      .join("");
+
+    grid.querySelectorAll(".open-garden-btn").forEach((btn) => {
+      btn.addEventListener("click", function () {
+        loadGardenById(this.getAttribute("data-gid"));
+      });
+    });
+
+    grid.querySelectorAll(".del-garden-btn").forEach((btn) => {
+      btn.addEventListener("click", function () {
+        deleteGardenById(this.getAttribute("data-gid"));
+      });
+    });
   }
 
   let map = null;
@@ -151,6 +281,8 @@
       populateCropSelect();
       populateSeasonSelect();
     } else if (stepNum === 4) {
+      const gInput = document.getElementById("gardenNameInput");
+      if (gInput) gInput.value = state.gardenName || "";
       syncPriorityButtons();
       renderWizardSummary();
     }
@@ -559,6 +691,7 @@
 
     state.planResult = planResult;
     state.activeStrategyKey = state.priority;
+    saveCurrentGardenToList();
 
     await new Promise((r) => setTimeout(r, 260));
     markStep(3, 100);
@@ -570,6 +703,25 @@
     renderResultsUI(true);
   }
 
+  function renderGardenSwitcher() {
+    const wrap = document.getElementById("gardenSwitcherWrap");
+    const select = document.getElementById("gardenSelect");
+    if (!wrap || !select) return;
+
+    if (!state.savedGardens || state.savedGardens.length <= 1) {
+      wrap.classList.add("hidden-block");
+      return;
+    }
+
+    wrap.classList.remove("hidden-block");
+    select.innerHTML = state.savedGardens
+      .map(
+        (g) =>
+          `<option value="${g.gardenId}" ${g.gardenId === state.gardenId ? "selected" : ""}>${g.gardenName}</option>`
+      )
+      .join("");
+  }
+
   // Results Dashboard Rendering
   function renderResultsUI(animateCards) {
     const dict = t();
@@ -577,10 +729,13 @@
     const plan = state.planResult;
     if (!climate || !plan) return;
 
+    renderGardenSwitcher();
+
     // Context Bar
     const locTitle = document.getElementById("activeLocationLabel");
     if (locTitle) {
-      locTitle.textContent = getCurrentAreaDisplayName();
+      const areaText = getCurrentAreaDisplayName();
+      locTitle.textContent = state.gardenName ? `${state.gardenName} (${areaText})` : areaText;
     }
 
     const tagsRow = document.getElementById("activeFarmTags");
@@ -841,6 +996,13 @@
       searchInput.placeholder = dict.searchCityPlaceholder;
     }
 
+    const gardenNameInput = document.getElementById("gardenNameInput");
+    if (gardenNameInput) {
+      gardenNameInput.placeholder = dict.gardenNamePlaceholder;
+    }
+
+    renderSavedGardensOnWelcome();
+
     renderCountryCards();
     if (state.countryId) {
       const country = getSelectedCountry();
@@ -1036,7 +1198,15 @@
       saveStateToStorage();
     });
 
-    // Step 4: Priority Buttons
+    // Step 4: Garden Name Input & Priority Buttons
+    const gardenNameInput = document.getElementById("gardenNameInput");
+    if (gardenNameInput) {
+      gardenNameInput.addEventListener("input", function () {
+        state.gardenName = this.value;
+        saveStateToStorage();
+      });
+    }
+
     document.querySelectorAll(".priority-btn").forEach((btn) => {
       btn.addEventListener("click", function () {
         state.priority = this.getAttribute("data-priority");
@@ -1051,6 +1221,30 @@
       runAnimatedPipelineAndShowDashboard();
     });
 
+    // Dashboard Multi-Garden Switcher & Add Garden
+    const gardenSelect = document.getElementById("gardenSelect");
+    if (gardenSelect) {
+      gardenSelect.addEventListener("change", function () {
+        loadGardenById(this.value);
+      });
+    }
+
+    const addGardenBtn = document.getElementById("addGardenBtn");
+    if (addGardenBtn) {
+      addGardenBtn.addEventListener("click", function () {
+        state.gardenId = null;
+        state.gardenName = "";
+        state.countryId = null;
+        state.regionId = null;
+        state.customCityName = null;
+        state.maxUnlockedStep = 1;
+        state.prevCropId = "none";
+        document.getElementById("regionPickerPanel").classList.add("hidden-block");
+        renderCountryCards();
+        goToWizardStep(1);
+      });
+    }
+
     // Dashboard Quick Edit Actions
     document.getElementById("editLocationBtn").addEventListener("click", () => goToWizardStep(1));
     document.getElementById("editInputsBtn").addEventListener("click", () => goToWizardStep(3));
@@ -1058,6 +1252,7 @@
       clearSavedFarmState();
       document.getElementById("regionPickerPanel").classList.add("hidden-block");
       renderCountryCards();
+      renderSavedGardensOnWelcome();
       showStage("welcome");
     });
 

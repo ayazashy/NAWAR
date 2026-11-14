@@ -1547,3 +1547,97 @@ html[dir="rtl"] .pipeline-arrow {
     text-transform: uppercase;
   }
 }
+
+/* Multi-Garden Planning Styles */
+.saved-gardens-section {
+  margin-top: 28px;
+  padding-top: 22px;
+  border-top: 1px solid var(--border-color);
+  text-align: start;
+}
+
+.saved-gardens-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.saved-garden-card {
+  background: var(--bg-page);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.saved-garden-name {
+  font-size: 0.96rem;
+  font-weight: 700;
+  color: var(--brand-green-dark);
+}
+
+.saved-garden-loc {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.saved-garden-chain {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.saved-garden-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.saved-garden-actions .primary-cta-btn {
+  flex: 1;
+  min-height: 38px;
+  padding: 6px 10px;
+  font-size: 0.82rem;
+}
+
+.saved-garden-actions .secondary-btn {
+  min-height: 38px;
+  padding: 6px 10px;
+  font-size: 0.82rem;
+  color: var(--brand-terracotta);
+}
+
+.garden-switcher-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.garden-switch-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--brand-green-dark);
+}
+
+.garden-select-input {
+  min-height: 36px;
+  padding: 5px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--brand-green);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.add-garden-btn {
+  min-height: 42px;
+  padding: 8px 14px;
+  font-size: 0.85rem;
+}

@@ -717,6 +717,14 @@ window.NAWAR_DATA = {
       dsDescSmap: "Surface & root-zone soil moisture every 2-3 days.",
       dsDescGpm: "Global precipitation rates & drought tracking.",
       dsDescModis: "NDVI vegetation health & FAO agro-ecological suitability.",
+      gardenNameLabel: "Garden / Plot Name (Optional)",
+      gardenNamePlaceholder: "e.g. North Olive Plot, Home Garden...",
+      defaultGardenPrefix: "Garden",
+      savedGardensTitle: "My Saved Gardens",
+      openGardenBtn: "Open Plan",
+      deleteGardenBtn: "Delete",
+      addGardenBtn: "+ Plan Another Garden",
+      switchGardenLabel: "Active Garden:",
       footerText: "Built by NAWAR Team for NASA Space Apps Challenge 2026"
     },
     ar: {
@@ -897,6 +905,14 @@ window.NAWAR_DATA = {
       dsDescSmap: "قياس رطوبة التربة السطحية والجذرية كل 2-3 أيام.",
       dsDescGpm: "معدلات هطول الأمطار العالمية وتتبع الجفاف.",
       dsDescModis: "مؤشر الغطاء النباتي (NDVI) وملاءمة المحاصيل (FAO GAEZ).",
+      gardenNameLabel: "اسم البستان أو الحقل (اختياري)",
+      gardenNamePlaceholder: "مثال: حقل الزيتون الشمالي، بستان المنزل...",
+      defaultGardenPrefix: "بستان",
+      savedGardensTitle: "بساتيني وحقولي المحفوظة",
+      openGardenBtn: "عرض الخطة",
+      deleteGardenBtn: "حذف",
+      addGardenBtn: "+ تخطيط بستان جديد",
+      switchGardenLabel: "البستان الحالي:",
       footerText: "تطوير فريق نَوّار (NAWAR Team) - تحدي ناسا لتطبيقات الفضاء 2026"
     }
   }

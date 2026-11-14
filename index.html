@@ -78,6 +78,12 @@
           Start Planning My Farm
         </button>
       </div>
+
+      <!-- Saved Gardens List (shown when user has >= 1 saved garden) -->
+      <div id="savedGardensSection" class="saved-gardens-section hidden-block">
+        <h3 class="sub-heading" data-i18n="savedGardensTitle">My Saved Gardens</h3>
+        <div id="savedGardensGrid" class="saved-gardens-grid"></div>
+      </div>
     </div>
   </section>
 
@@ -260,6 +266,11 @@
           </button>
         </div>
 
+        <div class="field-group" style="margin-bottom: 18px;">
+          <label for="gardenNameInput" class="field-label" data-i18n="gardenNameLabel">Garden / Plot Name (Optional)</label>
+          <input type="text" id="gardenNameInput" class="text-input" placeholder="e.g. North Olive Plot, Home Garden..." />
+        </div>
+
         <div class="summary-review-card">
           <h3 class="sub-heading" data-i18n="reviewSummaryTitle">Your Farm Summary</h3>
           <div id="wizardSummaryGrid" class="wizard-summary-grid"></div>
@@ -304,13 +315,18 @@
     </nav>
 
     <main class="dashboard-container">
-      <!-- Farm Context Bar with Quick Edit Buttons -->
+      <!-- Farm Context Bar with Quick Edit Buttons & Multi-Garden Switcher -->
       <div class="farm-context-bar panel-card">
         <div class="farm-context-info">
+          <div id="gardenSwitcherWrap" class="garden-switcher-wrap hidden-block">
+            <label for="gardenSelect" class="garden-switch-label" data-i18n="switchGardenLabel">Active Garden:</label>
+            <select id="gardenSelect" class="garden-select-input"></select>
+          </div>
           <h2 id="activeLocationLabel" class="context-location-title">-</h2>
           <div id="activeFarmTags" class="context-tags-row"></div>
         </div>
         <div class="farm-context-actions">
+          <button type="button" id="addGardenBtn" class="primary-cta-btn add-garden-btn" data-i18n="addGardenBtn">+ Plan Another Garden</button>
           <button type="button" id="editLocationBtn" class="secondary-btn" data-i18n="editLocationBtn">Change
             Location</button>
           <button type="button" id="editInputsBtn" class="secondary-btn" data-i18n="editInputsBtn">Edit Soil /
