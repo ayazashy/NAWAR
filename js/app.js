@@ -1,320 +1,500 @@
-/* NAWAR GeoAI - Main Application Controller (Map, UI State, Bilingual, Animations) */
+/* NAWAR GeoAI - Step-by-Step Guided User Journey, Map, Modals & Dashboard Controller */
 
 (function () {
   const DATA = window.NAWAR_DATA;
 
   const state = {
-    lang: "en", // English by default as requested
-    countryId: "sa",
-    regionId: "sa-jouf",
-    isCustomPoint: false,
-    lat: 29.8874,
-    lon: 39.3206,
-    prevCropId: "wheat",
-    soilType: "sandy",
+    lang: "en", // English by default
+    stage: "welcome", // "welcome" | "wizard" | "dashboard"
+    wizStep: 1, // 1 | 2 | 3 | 4
+    maxUnlockedStep: 1,
+    countryId: null,
+    regionId: null,
+    customCityName: null,
+    lat: 24.7136,
+    lon: 46.6753,
+    mapZoom: 10,
+    suggestedSoil: "loamy",
+    soilType: "loamy",
+    prevCropId: "none",
     startSeason: "winter",
     priority: "water",
     activeStrategyKey: "water",
     mapLayer: "street",
     climateData: null,
-    planResult: null
+    planResult: null,
+    extraSearchRegions: []
   };
 
   let map = null;
   let streetTiles = null;
   let satTiles = null;
   let activeMarker = null;
-  let regionDotsLayer = null;
 
   function t() {
     return DATA.i18n[state.lang];
   }
 
-  function findRegionById(regId) {
-    for (const country of DATA.countries) {
-      const found = country.regions.find((r) => r.id === regId);
-      if (found) return { country, region: found };
-    }
-    return null;
+  function getSelectedCountry() {
+    return DATA.countries.find((c) => c.id === state.countryId) || null;
   }
 
+  function getSelectedRegion() {
+    const c = getSelectedCountry();
+    if (!c) return null;
+    const preset = c.regions.find((r) => r.id === state.regionId);
+    if (preset) return preset;
+    return state.extraSearchRegions.find((r) => r.id === state.regionId) || null;
+  }
+
+  function getCurrentAreaDisplayName() {
+    const dict = t();
+    const country = getSelectedCountry();
+    const region = getSelectedRegion();
+    if (state.customCityName && country) {
+      return `${state.customCityName} - ${country.name[state.lang]}`;
+    }
+    if (region && country) {
+      return `${region.name[state.lang]} - ${country.name[state.lang]}`;
+    }
+    if (country) {
+      return `${country.name[state.lang]} (${state.lat.toFixed(3)}, ${state.lon.toFixed(3)})`;
+    }
+    return `${dict.latLabel}: ${state.lat.toFixed(3)}, ${dict.lonLabel}: ${state.lon.toFixed(3)}`;
+  }
+
+  // Stage & Wizard Navigation
+  function showStage(stageName) {
+    state.stage = stageName;
+    document.getElementById("welcomeStage").classList.toggle("active-stage", stageName === "welcome");
+    document.getElementById("wizardStage").classList.toggle("active-stage", stageName === "wizard");
+    document.getElementById("dashboardStage").classList.toggle("active-stage", stageName === "dashboard");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function goToWizardStep(stepNum) {
+    state.wizStep = stepNum;
+    if (stepNum > state.maxUnlockedStep) {
+      state.maxUnlockedStep = stepNum;
+    }
+
+    showStage("wizard");
+
+    for (let i = 1; i <= 4; i++) {
+      const card = document.getElementById(`wizStep${i}`);
+      if (card) {
+        card.classList.toggle("active-wiz-step", i === stepNum);
+      }
+    }
+
+    document.querySelectorAll(".wiz-prog-item").forEach((btn) => {
+      const s = Number(btn.getAttribute("data-wiz-step"));
+      btn.disabled = s > state.maxUnlockedStep;
+      btn.classList.toggle("active", s === stepNum);
+      btn.classList.toggle("done", s < stepNum);
+    });
+
+    if (stepNum === 2) {
+      ensureMapInitializedAndZoomed();
+      updateStep2Header();
+    } else if (stepNum === 3) {
+      renderSoilCards();
+      populateCropSelect();
+      populateSeasonSelect();
+    } else if (stepNum === 4) {
+      syncPriorityButtons();
+      renderWizardSummary();
+    }
+  }
+
+  // STEP 1: Country & City/Region Search ("تصغير المساحة")
+  function renderCountryCards() {
+    const grid = document.getElementById("countryCardsGrid");
+    if (!grid) return;
+
+    grid.innerHTML = DATA.countries
+      .map((c) => {
+        const isSelected = c.id === state.countryId;
+        return `
+          <button type="button" class="country-card-btn ${isSelected ? "selected" : ""}" data-country="${c.id}">
+            <span>${c.name[state.lang]}</span>
+            <span>→</span>
+          </button>
+        `;
+      })
+      .join("");
+
+    grid.querySelectorAll(".country-card-btn").forEach((btn) => {
+      btn.addEventListener("click", function () {
+        const cid = this.getAttribute("data-country");
+        selectCountryInStep1(cid);
+      });
+    });
+  }
+
+  function selectCountryInStep1(countryId) {
+    state.countryId = countryId;
+    state.regionId = null;
+    state.customCityName = null;
+    state.extraSearchRegions = [];
+
+    const searchInput = document.getElementById("citySearchInput");
+    if (searchInput) searchInput.value = "";
+    hideSearchStatus();
+
+    renderCountryCards();
+
+    const country = getSelectedCountry();
+    const panel = document.getElementById("regionPickerPanel");
+    const badge = document.getElementById("selectedCountryBadge");
+    if (panel && country) {
+      panel.classList.remove("hidden-block");
+      if (badge) badge.textContent = country.name[state.lang];
+      renderRegionCards("");
+      setTimeout(() => {
+        panel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }, 80);
+    }
+  }
+
+  function renderRegionCards(filterText) {
+    const grid = document.getElementById("regionCardsGrid");
+    const country = getSelectedCountry();
+    if (!grid || !country) return;
+
+    const query = (filterText || "").trim().toLowerCase();
+    const combinedRegions = [...country.regions, ...state.extraSearchRegions];
+
+    const filtered = combinedRegions.filter((r) => {
+      if (!query) return true;
+      const enMatch = (r.name.en || "").toLowerCase().includes(query);
+      const arMatch = (r.name.ar || "").toLowerCase().includes(query);
+      return enMatch || arMatch;
+    });
+
+    if (!filtered.length) {
+      grid.innerHTML = "";
+      showSearchStatus(t().noCityFoundMsg);
+      return;
+    }
+
+    hideSearchStatus();
+
+    grid.innerHTML = filtered
+      .map((r) => {
+        const isSel = r.id === state.regionId;
+        return `
+          <button type="button" class="region-card-btn ${isSel ? "selected" : ""}" data-region="${r.id}">
+            <span>${r.name[state.lang]}</span>
+            <span>📍</span>
+          </button>
+        `;
+      })
+      .join("");
+
+    grid.querySelectorAll(".region-card-btn").forEach((btn) => {
+      btn.addEventListener("click", function () {
+        const rid = this.getAttribute("data-region");
+        selectRegionAndZoomToStep2(rid);
+      });
+    });
+  }
+
+  function selectRegionAndZoomToStep2(regionId) {
+    const country = getSelectedCountry();
+    if (!country) return;
+
+    const allRegions = [...country.regions, ...state.extraSearchRegions];
+    const found = allRegions.find((r) => r.id === regionId);
+    if (!found) return;
+
+    state.regionId = found.id;
+    state.customCityName = null;
+    state.lat = Number(found.lat.toFixed(4));
+    state.lon = Number(found.lon.toFixed(4));
+    state.mapZoom = 11;
+    state.suggestedSoil = found.soil || "loamy";
+    state.soilType = state.suggestedSoil;
+
+    goToWizardStep(2);
+  }
+
+  async function searchCityViaNominatim() {
+    const input = document.getElementById("citySearchInput");
+    const country = getSelectedCountry();
+    if (!input || !country) return;
+
+    const query = input.value.trim();
+    if (!query) {
+      renderRegionCards("");
+      return;
+    }
+
+    showSearchStatus(t().searchingCityMsg);
+
+    try {
+      const url = `https://nominatim.openstreetmap.org/search?format=json&countrycodes=${country.code}&limit=5&q=${encodeURIComponent(query)}`;
+      const res = await fetch(url, {
+        headers: { "Accept-Language": state.lang === "ar" ? "ar,en" : "en" }
+      });
+      if (!res.ok) throw new Error("Search failed");
+      const items = await res.json();
+
+      if (Array.isArray(items) && items.length > 0) {
+        state.extraSearchRegions = items.map((item, idx) => {
+          const shortName = (item.display_name || query).split(",")[0].trim();
+          return {
+            id: `search-${idx}-${Date.now()}`,
+            name: { en: shortName, ar: shortName },
+            lat: parseFloat(item.lat),
+            lon: parseFloat(item.lon),
+            soil: country.regions[0] ? country.regions[0].soil : "loamy"
+          };
+        });
+        hideSearchStatus();
+        renderRegionCards(query);
+      } else {
+        renderRegionCards(query);
+      }
+    } catch (e) {
+      renderRegionCards(query);
+    }
+  }
+
+  function showSearchStatus(msg) {
+    const el = document.getElementById("citySearchStatus");
+    if (!el) return;
+    el.textContent = msg;
+    el.classList.remove("hidden-block");
+  }
+
+  function hideSearchStatus() {
+    const el = document.getElementById("citySearchStatus");
+    if (!el) return;
+    el.classList.add("hidden-block");
+  }
+
+  // STEP 2: Interactive Zoomed Map
   function createPinIcon() {
     return L.divIcon({
       className: "nawar-map-pin-wrapper",
       html: `<div class="nawar-map-pin"><span class="nawar-map-pin-core"></span></div>`,
-      iconSize: [30, 30],
-      iconAnchor: [15, 15]
+      iconSize: [28, 28],
+      iconAnchor: [14, 14]
     });
   }
 
-  function initMap() {
+  function ensureMapInitializedAndZoomed() {
     const mapContainer = document.getElementById("farmMap");
     if (!mapContainer || typeof L === "undefined") return;
 
-    map = L.map("farmMap", {
-      center: [state.lat, state.lon],
-      zoom: 6,
-      zoomControl: true,
-      scrollWheelZoom: true
-    });
+    if (!map) {
+      map = L.map("farmMap", {
+        center: [state.lat, state.lon],
+        zoom: state.mapZoom,
+        zoomControl: true,
+        scrollWheelZoom: true
+      });
 
-    streetTiles = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      maxZoom: 18,
-      attribution: "&copy; OpenStreetMap"
-    });
-
-    satTiles = L.tileLayer(
-      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-      {
+      streetTiles = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         maxZoom: 18,
-        attribution: "&copy; Esri"
-      }
-    );
-
-    streetTiles.addTo(map);
-
-    // Plot subtle clickable region markers across the Middle East
-    regionDotsLayer = L.layerGroup().addTo(map);
-    renderRegionMarkers();
-
-    // Place primary farm pin
-    activeMarker = L.marker([state.lat, state.lon], {
-      icon: createPinIcon(),
-      draggable: true
-    }).addTo(map);
-
-    activeMarker.on("dragend", function (e) {
-      const pos = e.target.getLatLng();
-      setCustomCoordinates(pos.lat, pos.lng, false);
-    });
-
-    map.on("click", function (e) {
-      setCustomCoordinates(e.latlng.lat, e.latlng.lng, false);
-    });
-  }
-
-  function renderRegionMarkers() {
-    if (!regionDotsLayer) return;
-    regionDotsLayer.clearLayers();
-
-    DATA.countries.forEach((country) => {
-      country.regions.forEach((reg) => {
-        const dot = L.circleMarker([reg.lat, reg.lon], {
-          radius: 5,
-          color: "#1f5c3a",
-          weight: 1.5,
-          fillColor: "#e9f2ec",
-          fillOpacity: 0.85
-        });
-
-        dot.bindTooltip(
-          `<strong>${reg.name[state.lang]}</strong><br/>${country.name[state.lang]}`,
-          { direction: "top", offset: [0, -6] }
-        );
-
-        dot.on("click", function (ev) {
-          L.DomEvent.stopPropagation(ev);
-          selectPresetRegion(country.id, reg.id, true);
-        });
-
-        regionDotsLayer.addLayer(dot);
+        attribution: "&copy; OpenStreetMap"
       });
-    });
-  }
 
-  function selectPresetRegion(countryId, regionId, shouldFly) {
-    const match = findRegionById(regionId);
-    if (!match) return;
-
-    state.countryId = countryId;
-    state.regionId = regionId;
-    state.isCustomPoint = false;
-    state.lat = match.region.lat;
-    state.lon = match.region.lon;
-    state.soilType = match.region.soil;
-
-    populateCountrySelect();
-    populateRegionSelect();
-    syncFormInputs();
-
-    if (map && activeMarker) {
-      activeMarker.setLatLng([state.lat, state.lon]);
-      if (shouldFly) {
-        map.flyTo([state.lat, state.lon], 7, { duration: 0.75 });
-      }
-    }
-
-    runPipelineAnalysis();
-  }
-
-  function setCustomCoordinates(lat, lon, shouldFly) {
-    const clampedLat = Math.max(-60, Math.min(70, Number(lat)));
-    const clampedLon = Math.max(-180, Math.min(180, Number(lon)));
-
-    state.lat = Number(clampedLat.toFixed(4));
-    state.lon = Number(clampedLon.toFixed(4));
-    state.isCustomPoint = true;
-
-    // Check if close to a known region to highlight its country
-    let nearestCountry = state.countryId;
-    let minDist = Infinity;
-    DATA.countries.forEach((c) => {
-      c.regions.forEach((r) => {
-        const d = Math.hypot(r.lat - state.lat, r.lon - state.lon);
-        if (d < minDist) {
-          minDist = d;
-          nearestCountry = c.id;
+      satTiles = L.tileLayer(
+        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+        {
+          maxZoom: 18,
+          attribution: "&copy; Esri"
         }
+      );
+
+      streetTiles.addTo(map);
+
+      activeMarker = L.marker([state.lat, state.lon], {
+        icon: createPinIcon(),
+        draggable: true
+      }).addTo(map);
+
+      activeMarker.on("dragend", function (e) {
+        const pos = e.target.getLatLng();
+        updatePinCoordinates(pos.lat, pos.lng, false);
       });
-    });
-    state.countryId = nearestCountry;
 
-    populateCountrySelect();
-    populateRegionSelect();
-    syncFormInputs();
+      map.on("click", function (e) {
+        updatePinCoordinates(e.latlng.lat, e.latlng.lng, false);
+      });
+    }
 
-    if (map && activeMarker) {
+    setTimeout(() => {
+      map.invalidateSize();
       activeMarker.setLatLng([state.lat, state.lon]);
-      if (shouldFly) {
-        map.flyTo([state.lat, state.lon], 8, { duration: 0.75 });
-      }
+      map.setView([state.lat, state.lon], state.mapZoom, { animate: true });
+    }, 100);
+
+    syncLatLonInputs();
+  }
+
+  function updatePinCoordinates(lat, lon, recenter) {
+    state.lat = Number(Math.max(-60, Math.min(70, Number(lat))).toFixed(4));
+    state.lon = Number(Math.max(-180, Math.min(180, Number(lon))).toFixed(4));
+
+    if (activeMarker) {
+      activeMarker.setLatLng([state.lat, state.lon]);
     }
-
-    runPipelineAnalysis();
-  }
-
-  function populateCountrySelect() {
-    const countrySelect = document.getElementById("countrySelect");
-    if (!countrySelect) return;
-
-    countrySelect.innerHTML = DATA.countries
-      .map(
-        (c) =>
-          `<option value="${c.id}" ${c.id === state.countryId ? "selected" : ""}>${c.name[state.lang]}</option>`
-      )
-      .join("");
-  }
-
-  function populateRegionSelect() {
-    const regionSelect = document.getElementById("regionSelect");
-    if (!regionSelect) return;
-
-    const country = DATA.countries.find((c) => c.id === state.countryId) || DATA.countries[0];
-    let html = country.regions
-      .map(
-        (r) =>
-          `<option value="${r.id}" ${!state.isCustomPoint && r.id === state.regionId ? "selected" : ""}>${r.name[state.lang]}</option>`
-      )
-      .join("");
-
-    if (state.isCustomPoint) {
-      const customLabel = `${t().customLocationTag} (${state.lat.toFixed(3)}, ${state.lon.toFixed(3)})`;
-      html = `<option value="custom" selected>${customLabel}</option>` + html;
+    if (map && recenter) {
+      map.flyTo([state.lat, state.lon], state.mapZoom, { duration: 0.6 });
     }
-
-    regionSelect.innerHTML = html;
+    syncLatLonInputs();
+    updateStep2Header();
   }
 
-  function populateCropSelect() {
-    const prevCropSelect = document.getElementById("prevCropSelect");
-    if (!prevCropSelect) return;
-
-    const noneOption = `<option value="none" ${state.prevCropId === "none" ? "selected" : ""}>${t().prevCropNone}</option>`;
-    const cropOptions = DATA.crops
-      .map(
-        (c) =>
-          `<option value="${c.id}" ${c.id === state.prevCropId ? "selected" : ""}>${c.name[state.lang]} - ${c.familyLabel[state.lang]}</option>`
-      )
-      .join("");
-
-    prevCropSelect.innerHTML = noneOption + cropOptions;
-  }
-
-  function populateSoilAndSeasonSelects() {
-    const soilSelect = document.getElementById("soilSelect");
-    if (soilSelect) {
-      const soils = ["sandy", "loamy", "clay", "saline"];
-      soilSelect.innerHTML = soils
-        .map(
-          (s) =>
-            `<option value="${s}" ${state.soilType === s ? "selected" : ""}>${t()["soil_" + s]}</option>`
-        )
-        .join("");
-    }
-
-    const seasonSelect = document.getElementById("seasonSelect");
-    if (seasonSelect) {
-      const seasons = ["winter", "spring", "summer"];
-      seasonSelect.innerHTML = seasons
-        .map(
-          (s) =>
-            `<option value="${s}" ${state.startSeason === s ? "selected" : ""}>${t()["season_" + s]}</option>`
-        )
-        .join("");
-    }
-  }
-
-  function syncFormInputs() {
+  function syncLatLonInputs() {
     const latInput = document.getElementById("latInput");
     const lonInput = document.getElementById("lonInput");
     if (latInput) latInput.value = state.lat.toFixed(4);
     if (lonInput) lonInput.value = state.lon.toFixed(4);
-
-    const soilSelect = document.getElementById("soilSelect");
-    if (soilSelect) soilSelect.value = state.soilType;
-
-    const seasonSelect = document.getElementById("seasonSelect");
-    if (seasonSelect) seasonSelect.value = state.startSeason;
-
-    document.querySelectorAll(".priority-btn").forEach((btn) => {
-      const p = btn.getAttribute("data-priority");
-      btn.classList.toggle("active", p === state.priority);
-      btn.setAttribute("aria-pressed", p === state.priority ? "true" : "false");
-    });
   }
 
-  function applyStaticTranslations() {
-    const dict = t();
-    document.documentElement.lang = state.lang;
-    document.documentElement.dir = state.lang === "ar" ? "rtl" : "ltr";
-
-    document.querySelectorAll("[data-i18n]").forEach((el) => {
-      const key = el.getAttribute("data-i18n");
-      if (dict[key]) {
-        el.textContent = dict[key];
-      }
-    });
-
-    populateCountrySelect();
-    populateRegionSelect();
-    populateCropSelect();
-    populateSoilAndSeasonSelects();
-    syncFormInputs();
-    renderRegionMarkers();
-
-    if (state.climateData && state.planResult) {
-      renderResultsUI(false);
+  function updateStep2Header() {
+    const el = document.getElementById("step2AreaName");
+    if (el) {
+      el.textContent = getCurrentAreaDisplayName();
     }
   }
 
-  function animatePipelineFlow() {
-    const steps = document.querySelectorAll(".pipeline-step");
-    steps.forEach((step, idx) => {
-      step.classList.remove("step-active");
-      setTimeout(() => {
-        step.classList.add("step-active");
-      }, idx * 55);
+  // STEP 3: Soil Cards, Previous Crop & Starting Season
+  function renderSoilCards() {
+    const grid = document.getElementById("soilCardsGrid");
+    if (!grid) return;
+
+    const dict = t();
+    const soils = ["sandy", "loamy", "clay", "saline"];
+
+    grid.innerHTML = soils
+      .map((sKey) => {
+        const isSel = state.soilType === sKey;
+        const isSuggested = state.suggestedSoil === sKey;
+        return `
+          <button type="button" class="soil-card-btn ${isSel ? "selected" : ""}" data-soil="${sKey}">
+            <div class="soil-card-top">
+              <span class="soil-card-title">${dict["soil_" + sKey]}</span>
+              ${isSuggested ? `<span class="rec-badge">${dict.regionalSoilSuggested}</span>` : ""}
+            </div>
+            <p class="soil-card-desc">${dict["soil_" + sKey + "_desc"]}</p>
+          </button>
+        `;
+      })
+      .join("");
+
+    grid.querySelectorAll(".soil-card-btn").forEach((btn) => {
+      btn.addEventListener("click", function () {
+        state.soilType = this.getAttribute("data-soil");
+        renderSoilCards();
+      });
     });
   }
 
-  async function runPipelineAnalysis() {
-    const loadingBar = document.getElementById("nasaLoadingBar");
-    if (loadingBar) loadingBar.classList.add("visible");
+  function populateCropSelect() {
+    const select = document.getElementById("prevCropSelect");
+    if (!select) return;
+    const dict = t();
 
-    animatePipelineFlow();
+    const noneOpt = `<option value="none" ${state.prevCropId === "none" ? "selected" : ""}>${dict.prevCropNone}</option>`;
+    const cropOpts = DATA.crops
+      .map(
+        (c) =>
+          `<option value="${c.id}" ${state.prevCropId === c.id ? "selected" : ""}>${c.name[state.lang]} - ${c.familyLabel[state.lang]}</option>`
+      )
+      .join("");
 
-    const climate = await window.NasaPowerService.fetchClimate(state.lat, state.lon);
+    select.innerHTML = noneOpt + cropOpts;
+  }
+
+  function populateSeasonSelect() {
+    const select = document.getElementById("seasonSelect");
+    if (!select) return;
+    const dict = t();
+
+    const seasons = ["winter", "spring", "summer"];
+    select.innerHTML = seasons
+      .map(
+        (s) =>
+          `<option value="${s}" ${state.startSeason === s ? "selected" : ""}>${dict["season_" + s]}</option>`
+      )
+      .join("");
+  }
+
+  // STEP 4: Priority & Summary Review
+  function syncPriorityButtons() {
+    document.querySelectorAll(".priority-btn").forEach((btn) => {
+      const p = btn.getAttribute("data-priority");
+      const active = p === state.priority;
+      btn.classList.toggle("active", active);
+      btn.setAttribute("aria-pressed", active ? "true" : "false");
+    });
+  }
+
+  function renderWizardSummary() {
+    const grid = document.getElementById("wizardSummaryGrid");
+    if (!grid) return;
+    const dict = t();
+
+    const prevCropObj = DATA.crops.find((c) => c.id === state.prevCropId);
+    const prevCropLabel = prevCropObj ? prevCropObj.name[state.lang] : dict.prevCropNone;
+
+    const items = [
+      { label: dict.step1, val: getCurrentAreaDisplayName() },
+      { label: dict.soilTypeLabel, val: dict["soil_" + state.soilType] },
+      { label: dict.prevCropLabel, val: prevCropLabel },
+      { label: dict.startSeasonLabel, val: dict["season_" + state.startSeason] },
+      { label: dict.step4Title, val: dict["prio_" + state.priority] }
+    ];
+
+    grid.innerHTML = items
+      .map(
+        (item) => `
+        <div class="sum-item">
+          <div class="sum-label">${item.label}</div>
+          <div class="sum-val">${item.val}</div>
+        </div>
+      `
+      )
+      .join("");
+  }
+
+  // Animated NASA Analysis Modal -> Dashboard
+  async function runAnimatedPipelineAndShowDashboard() {
+    const modal = document.getElementById("analysisModal");
+    const progBar = document.getElementById("analysisProgressBar");
+    const stepIds = ["anStep1", "anStep2", "anStep3", "anStep4"];
+
+    if (modal) {
+      modal.classList.remove("hidden-modal");
+      if (progBar) progBar.style.width = "15%";
+      stepIds.forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove("done");
+      });
+    }
+
+    const markStep = (index, pct) => {
+      const el = document.getElementById(stepIds[index]);
+      if (el) el.classList.add("done");
+      if (progBar) progBar.style.width = `${pct}%`;
+    };
+
+    markStep(0, 28);
+    const climatePromise = window.NasaPowerService.fetchClimate(state.lat, state.lon);
+
+    await new Promise((r) => setTimeout(r, 320));
+    markStep(1, 55);
+
+    const climate = await climatePromise;
     state.climateData = climate;
+
+    await new Promise((r) => setTimeout(r, 280));
+    markStep(2, 82);
 
     const planResult = window.NawarEngine.generateFullPlan({
       crops: DATA.crops,
@@ -328,18 +508,42 @@
     state.planResult = planResult;
     state.activeStrategyKey = state.priority;
 
-    if (loadingBar) loadingBar.classList.remove("visible");
+    await new Promise((r) => setTimeout(r, 260));
+    markStep(3, 100);
 
+    await new Promise((r) => setTimeout(r, 200));
+    if (modal) modal.classList.add("hidden-modal");
+
+    showStage("dashboard");
     renderResultsUI(true);
   }
 
+  // Results Dashboard Rendering
   function renderResultsUI(animateCards) {
     const dict = t();
     const climate = state.climateData;
     const plan = state.planResult;
     if (!climate || !plan) return;
 
-    // 1. Update NASA POWER Telemetry Strip
+    // Context Bar
+    const locTitle = document.getElementById("activeLocationLabel");
+    if (locTitle) {
+      locTitle.textContent = getCurrentAreaDisplayName();
+    }
+
+    const tagsRow = document.getElementById("activeFarmTags");
+    if (tagsRow) {
+      const prevCropObj = DATA.crops.find((c) => c.id === state.prevCropId);
+      const prevName = prevCropObj ? prevCropObj.name[state.lang] : dict.prevCropNone;
+      tagsRow.innerHTML = `
+        <span class="context-tag">🌱 ${dict["soil_" + state.soilType]}</span>
+        <span class="context-tag">🌾 ${prevName}</span>
+        <span class="context-tag">🗓️ ${dict["season_" + state.startSeason]}</span>
+        <span class="context-tag">🎯 ${dict["prio_" + state.priority]}</span>
+      `;
+    }
+
+    // NASA Telemetry
     const sourceBadge = document.getElementById("nasaSourceBadge");
     if (sourceBadge) {
       sourceBadge.textContent =
@@ -348,33 +552,15 @@
         "status-pill " + (climate.source === "live" ? "status-live" : "status-cached");
     }
 
-    const activeLocationLabel = document.getElementById("activeLocationLabel");
-    if (activeLocationLabel) {
-      if (state.isCustomPoint) {
-        activeLocationLabel.textContent = `${dict.customLocationTag} (${state.lat.toFixed(3)}°, ${state.lon.toFixed(3)}°)`;
-      } else {
-        const match = findRegionById(state.regionId);
-        activeLocationLabel.textContent = match
-          ? `${match.region.name[state.lang]} - ${match.country.name[state.lang]}`
-          : "";
-      }
-    }
-
     document.getElementById("valTemp").textContent = `${climate.summary.annualTemp}°C`;
     document.getElementById("valMaxTemp").textContent = `${climate.summary.peakSummerTemp}°C`;
     document.getElementById("valRain").textContent = `${climate.summary.annualRainfallMm} mm`;
     document.getElementById("valSolar").textContent = `${climate.summary.meanSolar} kWh/m²`;
 
-    // 2. Render 3 Strategy Selector Cards
     renderStrategyCards();
-
-    // 3. Render Active 3-Season Plan Table
     renderPlanTable(animateCards);
-
-    // 4. Render Climate Scenario Stress-Test Cards & Confidence Badge
     renderScenarioSection();
 
-    // 5. Render Chart.js Visualizations
     const activeStrat = plan.strategies[state.activeStrategyKey];
     window.NawarCharts.renderStrategyChart("strategyChart", plan, state.lang, dict);
     window.NawarCharts.renderScenarioChart("scenarioChart", activeStrat, state.lang, dict);
@@ -464,7 +650,7 @@
         const returnEst = step.crop.returnEstimate[state.lang];
 
         return `
-          <tr class="${animate ? "row-fade-in" : ""}" style="animation-delay: ${idx * 70}ms">
+          <tr class="${animate ? "row-fade-in" : ""}" data-step-idx="${idx}" style="animation-delay: ${idx * 70}ms">
             <td data-label="${dict.colSeason}">
               <div class="cell-season-num">${sLabel}</div>
               <div class="cell-season-sub">${sSub}</div>
@@ -490,6 +676,58 @@
         `;
       })
       .join("");
+
+    tbody.querySelectorAll("tr").forEach((row) => {
+      row.addEventListener("click", function () {
+        const idx = Number(this.getAttribute("data-step-idx"));
+        openCropDetailModal(idx);
+      });
+    });
+  }
+
+  function openCropDetailModal(stepIdx) {
+    if (!state.planResult || !state.climateData) return;
+    const dict = t();
+    const activeStrat = state.planResult.strategies[state.activeStrategyKey];
+    const step = activeStrat.steps[stepIdx];
+    if (!step) return;
+
+    const seasonTitleKeys = ["season1Label", "season2Label", "season3Label"];
+    const sLabel = `${dict[seasonTitleKeys[stepIdx]]} - ${dict["seasonName_" + step.seasonKey]}`;
+    const sClimate = state.climateData.seasons[step.seasonKey];
+
+    document.getElementById("cropModalSeasonBadge").textContent = sLabel;
+    document.getElementById("cropModalTitle").textContent = step.crop.name[state.lang];
+    document.getElementById("cropModalFamily").textContent = step.crop.familyLabel[state.lang];
+
+    const body = document.getElementById("cropModalBody");
+    body.innerHTML = `
+      <div class="crop-modal-grid">
+        <div class="sum-item">
+          <div class="sum-label">${dict.modalSuitabilityScore}</div>
+          <div class="sum-val tabular-nums">${step.totalScore} / 100</div>
+        </div>
+        <div class="sum-item">
+          <div class="sum-label">${dict.modalOptimalTemp}</div>
+          <div class="sum-val tabular-nums">${step.crop.tempRange.optMin}°C - ${step.crop.tempRange.optMax}°C</div>
+        </div>
+        <div class="sum-item">
+          <div class="sum-label">${dict.modalLocalSeasonTemp}</div>
+          <div class="sum-val tabular-nums">${sClimate.meanTemp}°C (Max ${sClimate.maxTemp}°C)</div>
+        </div>
+        <div class="sum-item">
+          <div class="sum-label">${dict.modalSeasonalWater}</div>
+          <div class="sum-val tabular-nums">${step.adjustedWaterNeed} mm</div>
+        </div>
+      </div>
+      <div class="sum-item">
+        <div class="sum-label">${dict.modalWhySelected}</div>
+        <div class="sum-val" style="font-weight: 500; margin-top: 4px;">${step.crop.reasons[state.lang]}</div>
+        <span class="rule-pill" style="margin-top: 8px;">${dict[step.ruleKey]}</span>
+      </div>
+    `;
+
+    document.getElementById("cropDetailModal").classList.remove("hidden-modal");
   }
 
   function renderScenarioSection() {
@@ -533,6 +771,82 @@
     }
   }
 
+  function applyStaticTranslations() {
+    const dict = t();
+    document.documentElement.lang = state.lang;
+    document.documentElement.dir = state.lang === "ar" ? "rtl" : "ltr";
+
+    document.querySelectorAll("[data-i18n]").forEach((el) => {
+      const key = el.getAttribute("data-i18n");
+      if (dict[key]) {
+        el.textContent = dict[key];
+      }
+    });
+
+    const searchInput = document.getElementById("citySearchInput");
+    if (searchInput) {
+      searchInput.placeholder = dict.searchCityPlaceholder;
+    }
+
+    renderCountryCards();
+    if (state.countryId) {
+      const country = getSelectedCountry();
+      const badge = document.getElementById("selectedCountryBadge");
+      if (badge && country) badge.textContent = country.name[state.lang];
+      renderRegionCards(searchInput ? searchInput.value : "");
+    }
+
+    updateStep2Header();
+    renderSoilCards();
+    populateCropSelect();
+    populateSeasonSelect();
+    syncPriorityButtons();
+    renderWizardSummary();
+
+    if (state.stage === "dashboard" && state.climateData && state.planResult) {
+      renderResultsUI(false);
+    }
+  }
+
+  function requestUserGpsAndGoToMap() {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        state.lat = Number(pos.coords.latitude.toFixed(4));
+        state.lon = Number(pos.coords.longitude.toFixed(4));
+        state.mapZoom = 12;
+
+        // Find nearest country for soil hint
+        let bestCountry = DATA.countries[0];
+        let bestRegion = bestCountry.regions[0];
+        let minDist = Infinity;
+        DATA.countries.forEach((c) => {
+          c.regions.forEach((r) => {
+            const d = Math.hypot(r.lat - state.lat, r.lon - state.lon);
+            if (d < minDist) {
+              minDist = d;
+              bestCountry = c;
+              bestRegion = r;
+            }
+          });
+        });
+
+        state.countryId = bestCountry.id;
+        state.regionId = null;
+        state.customCityName = "GPS";
+        state.suggestedSoil = bestRegion.soil || "loamy";
+        state.soilType = state.suggestedSoil;
+
+        goToWizardStep(2);
+      },
+      () => {
+        // If denied or unavailable, open map at current state
+        goToWizardStep(2);
+      },
+      { timeout: 6000 }
+    );
+  }
+
   function bindEvents() {
     // Language Toggle
     const langToggleBtn = document.getElementById("langToggleBtn");
@@ -540,66 +854,86 @@
       langToggleBtn.addEventListener("click", function () {
         state.lang = state.lang === "en" ? "ar" : "en";
         applyStaticTranslations();
-        if (map) {
-          setTimeout(() => map.invalidateSize(), 150);
+        if (map && state.stage === "wizard" && state.wizStep === 2) {
+          setTimeout(() => map.invalidateSize(), 120);
         }
       });
     }
 
-    // Country Select
-    const countrySelect = document.getElementById("countrySelect");
-    if (countrySelect) {
-      countrySelect.addEventListener("change", function () {
-        const newCountryId = this.value;
-        const country = DATA.countries.find((c) => c.id === newCountryId);
-        if (country && country.regions.length) {
-          selectPresetRegion(country.id, country.regions[0].id, true);
+    // Brand Home click -> Welcome Screen
+    const brandHome = document.getElementById("brandHomeTrigger");
+    if (brandHome) {
+      brandHome.addEventListener("click", function () {
+        showStage("welcome");
+      });
+    }
+
+    // Start Journey Button on Welcome Screen
+    const startBtn = document.getElementById("startJourneyBtn");
+    if (startBtn) {
+      startBtn.addEventListener("click", function () {
+        goToWizardStep(1);
+      });
+    }
+
+    // Wizard Top Progress Tabs
+    document.querySelectorAll(".wiz-prog-item").forEach((btn) => {
+      btn.addEventListener("click", function () {
+        const targetStep = Number(this.getAttribute("data-wiz-step"));
+        if (targetStep <= state.maxUnlockedStep) {
+          goToWizardStep(targetStep);
+        }
+      });
+    });
+
+    // Step 1: City Search input & button
+    const citySearchInput = document.getElementById("citySearchInput");
+    if (citySearchInput) {
+      citySearchInput.addEventListener("input", function () {
+        renderRegionCards(this.value);
+      });
+      citySearchInput.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          searchCityViaNominatim();
         }
       });
     }
 
-    // Region Select
-    const regionSelect = document.getElementById("regionSelect");
-    if (regionSelect) {
-      regionSelect.addEventListener("change", function () {
-        if (this.value === "custom") return;
-        selectPresetRegion(state.countryId, this.value, true);
+    const searchCityBtn = document.getElementById("searchCityBtn");
+    if (searchCityBtn) {
+      searchCityBtn.addEventListener("click", searchCityViaNominatim);
+    }
+
+    // Step 1: "My farm isn't in the list - Pin it on the map"
+    const notInListBtn = document.getElementById("notInListMapBtn");
+    if (notInListBtn) {
+      notInListBtn.addEventListener("click", function () {
+        const country = getSelectedCountry();
+        if (country) {
+          state.lat = country.centerLat;
+          state.lon = country.centerLon;
+          state.mapZoom = 7;
+          state.regionId = null;
+          state.customCityName = null;
+          state.suggestedSoil = country.regions[0] ? country.regions[0].soil : "loamy";
+          state.soilType = state.suggestedSoil;
+        }
+        goToWizardStep(2);
       });
     }
 
-    // Manual Lat / Lon inputs
-    const latInput = document.getElementById("latInput");
-    const lonInput = document.getElementById("lonInput");
-    function handleCoordChange() {
-      const parsedLat = parseFloat(latInput.value);
-      const parsedLon = parseFloat(lonInput.value);
-      if (!isNaN(parsedLat) && !isNaN(parsedLon)) {
-        setCustomCoordinates(parsedLat, parsedLon, true);
-      }
+    // Direct GPS buttons (Step 1 & Step 2)
+    const gpsDirectBtn = document.getElementById("useGpsDirectBtn");
+    if (gpsDirectBtn) {
+      gpsDirectBtn.addEventListener("click", requestUserGpsAndGoToMap);
     }
-    if (latInput) latInput.addEventListener("change", handleCoordChange);
-    if (lonInput) lonInput.addEventListener("change", handleCoordChange);
-
-    // GPS Button
-    const gpsBtn = document.getElementById("useGpsBtn");
-    if (gpsBtn) {
-      gpsBtn.addEventListener("click", function () {
-        if (!navigator.geolocation) return;
-        gpsBtn.disabled = true;
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            gpsBtn.disabled = false;
-            setCustomCoordinates(pos.coords.latitude, pos.coords.longitude, true);
-          },
-          () => {
-            gpsBtn.disabled = false;
-          },
-          { timeout: 6000 }
-        );
-      });
+    const gpsMapBtn = document.getElementById("useGpsBtn");
+    if (gpsMapBtn) {
+      gpsMapBtn.addEventListener("click", requestUserGpsAndGoToMap);
     }
 
-    // Map Layer Switcher (Terrain / Satellite)
+    // Step 2: Map Layer Switcher
     document.querySelectorAll(".map-layer-btn").forEach((btn) => {
       btn.addEventListener("click", function () {
         const layer = this.getAttribute("data-layer");
@@ -618,59 +952,72 @@
       });
     });
 
-    // Previous Crop, Soil, Starting Season
-    const prevCropSelect = document.getElementById("prevCropSelect");
-    if (prevCropSelect) {
-      prevCropSelect.addEventListener("change", function () {
-        state.prevCropId = this.value;
-        runPipelineAnalysis();
-      });
+    // Step 2: Manual Lat / Lon inputs
+    const latInput = document.getElementById("latInput");
+    const lonInput = document.getElementById("lonInput");
+    function onManualCoordChange() {
+      const pLat = parseFloat(latInput.value);
+      const pLon = parseFloat(lonInput.value);
+      if (!isNaN(pLat) && !isNaN(pLon)) {
+        updatePinCoordinates(pLat, pLon, true);
+      }
     }
+    if (latInput) latInput.addEventListener("change", onManualCoordChange);
+    if (lonInput) lonInput.addEventListener("change", onManualCoordChange);
 
-    const soilSelect = document.getElementById("soilSelect");
-    if (soilSelect) {
-      soilSelect.addEventListener("change", function () {
-        state.soilType = this.value;
-        runPipelineAnalysis();
-      });
-    }
+    // Wizard Step Back / Next Buttons
+    document.getElementById("backToStep1Btn").addEventListener("click", () => goToWizardStep(1));
+    document.getElementById("toStep3Btn").addEventListener("click", () => goToWizardStep(3));
+    document.getElementById("backToStep2Btn").addEventListener("click", () => goToWizardStep(2));
+    document.getElementById("toStep4Btn").addEventListener("click", () => goToWizardStep(4));
+    document.getElementById("backToStep3Btn").addEventListener("click", () => goToWizardStep(3));
 
-    const seasonSelect = document.getElementById("seasonSelect");
-    if (seasonSelect) {
-      seasonSelect.addEventListener("change", function () {
-        state.startSeason = this.value;
-        runPipelineAnalysis();
-      });
-    }
+    // Step 3: Crop & Season Selects
+    document.getElementById("prevCropSelect").addEventListener("change", function () {
+      state.prevCropId = this.value;
+    });
+    document.getElementById("seasonSelect").addEventListener("change", function () {
+      state.startSeason = this.value;
+    });
 
-    // Priority Buttons
+    // Step 4: Priority Buttons
     document.querySelectorAll(".priority-btn").forEach((btn) => {
       btn.addEventListener("click", function () {
-        const prio = this.getAttribute("data-priority");
-        if (!prio) return;
-        state.priority = prio;
-        syncFormInputs();
-        runPipelineAnalysis();
+        state.priority = this.getAttribute("data-priority");
+        syncPriorityButtons();
+        renderWizardSummary();
       });
     });
 
-    // Generate Button (smooth scroll to results on mobile)
-    const generateBtn = document.getElementById("generateBtn");
-    if (generateBtn) {
-      generateBtn.addEventListener("click", function () {
-        runPipelineAnalysis();
-        if (window.innerWidth < 960) {
-          const resultsEl = document.getElementById("resultsSection");
-          if (resultsEl) {
-            resultsEl.scrollIntoView({ behavior: "smooth", block: "start" });
-          }
-        }
-      });
-    }
+    // Step 4: Generate Plan Button
+    document.getElementById("generateBtn").addEventListener("click", function () {
+      runAnimatedPipelineAndShowDashboard();
+    });
 
-    // Interactive Pipeline Steps smooth navigation
+    // Dashboard Quick Edit Actions
+    document.getElementById("editLocationBtn").addEventListener("click", () => goToWizardStep(1));
+    document.getElementById("editInputsBtn").addEventListener("click", () => goToWizardStep(3));
+    document.getElementById("newFarmBtn").addEventListener("click", () => {
+      state.countryId = null;
+      state.regionId = null;
+      state.maxUnlockedStep = 1;
+      document.getElementById("regionPickerPanel").classList.add("hidden-block");
+      renderCountryCards();
+      showStage("welcome");
+    });
+
+    // Dashboard 7-Step Pipeline Strip
     document.querySelectorAll(".pipeline-step").forEach((step) => {
       step.addEventListener("click", function () {
+        const action = this.getAttribute("data-action");
+        if (action === "edit-location") {
+          goToWizardStep(2);
+          return;
+        }
+        if (action === "edit-inputs") {
+          goToWizardStep(3);
+          return;
+        }
         const targetId = this.getAttribute("data-target");
         const targetEl = targetId ? document.getElementById(targetId) : null;
         if (targetEl) {
@@ -678,12 +1025,25 @@
         }
       });
     });
+
+    // Crop Detail Modal Close
+    const closeCropModalBtn = document.getElementById("closeCropModalBtn");
+    const cropDetailModal = document.getElementById("cropDetailModal");
+    if (closeCropModalBtn && cropDetailModal) {
+      closeCropModalBtn.addEventListener("click", () => {
+        cropDetailModal.classList.add("hidden-modal");
+      });
+      cropDetailModal.addEventListener("click", (e) => {
+        if (e.target === cropDetailModal) {
+          cropDetailModal.classList.add("hidden-modal");
+        }
+      });
+    }
   }
 
   document.addEventListener("DOMContentLoaded", function () {
     applyStaticTranslations();
-    initMap();
     bindEvents();
-    runPipelineAnalysis();
+    showStage("welcome");
   });
 })();
